@@ -5,6 +5,16 @@ module FileUploader
     format :json
     default_format :json
 
+    @@x_reproxy_url = false
+    def self.x_reproxy_url=(flag)
+      @@x_reproxy_url = flag
+    end
+
+    @@x_accel_redirect = nil
+    def self.x_accel_redirect=(s3mountpoint)
+      @@x_accel_redirect = s3mountpoint
+    end
+
     def self.bucket=(bucket)
       @@bucket = Logic::Bucket.new(bucket)
     end
@@ -41,10 +51,23 @@ module FileUploader
       end
       get ':id' do
         content = Content.where(id:params.id).where(user_id:@user_id).take!
-        status 302
-        s3location = @@bucket.object(content.id).signed_download_uri
-        header 'Location', s3location
-        {uri:s3location}
+        s3obj = @@bucket.object(content.id)
+        s3location = s3obj.signed_download_uri
+        if @@x_reproxy_url or @@x_accel_redirect
+          status 200
+          content_type s3obj.content_type
+          if @@x_reproxy_url
+            header 'X-Reproxy-URL', s3location
+            header 'X-Accel-Redirect', "/#{@@x_accel_redirect}"
+          else
+            header 'X-Accel-Redirect', "/#{@@x_accel_redirect}/#{content.id}"
+          end
+          ""
+        else
+          status 302
+          header 'Location', s3location
+          {uri:s3location}
+        end
       end
 
       params do

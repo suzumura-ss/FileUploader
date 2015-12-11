@@ -36,12 +36,16 @@ module FileUploader
           @object.presigned_url(:get)
         end
 
+        def method_missing(mehod, *args)
+          @objec.send(method, args)
+        end
+
         def exists?
           @object.exists?
         end
 
-        def metadata
-          @object.metadata.with_indifferent_access
+        def content_type
+          @object.content_type
         end
       end
     end
