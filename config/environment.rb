@@ -2,9 +2,10 @@ FileUploader::FilesAPI.bucket = ENV['BUCKET_ARN']
 
 FileUploader::FilesAPI.x_accel_redirect = nil # use X-Accel-Redirect unless nil
 FileUploader::FilesAPI.x_reproxy_url = false  # use X-Reproxy-URL if true
+FileUploader::FilesAPI.redirect_with_location = false # use Location header if true
 =begin
     | x_accel_redirect  | x_reproxy_url |
-    | nil               | false         | 302 + Location header
+    | nil               | false         | 302 + Location header or self-data pump.
     | "/reploxy"        | false         | mount s3bucket to "/reploxy" .
     | nil               | true          | process X-Reproxy-URL header with Apache::mod_reproxy.
     | "/reproxy"        | true          | process X-Reproxy-URL header with nginx.

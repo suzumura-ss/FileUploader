@@ -1,4 +1,18 @@
+require 'open-uri'
+
+
 module FileUploader
+  class ReesponseStreamer
+    def initialize(uri)
+      @uri = uri
+    end
+    def each(&block)
+      Kernel.open(@uri){|res|
+        res.each(&block)
+      }
+    end
+  end
+
   class FilesAPI < Grape::API
     content_type :txt,  'text/plain'
     content_type :json, 'application/json'
@@ -13,6 +27,11 @@ module FileUploader
     @@x_accel_redirect = nil
     def self.x_accel_redirect=(s3mountpoint)
       @@x_accel_redirect = s3mountpoint
+    end
+
+    @@redirect_with_location = false
+    def self.redirect_with_location=(flag)
+      @@redirect_with_location = flag
     end
 
     def self.bucket=(bucket)
@@ -63,10 +82,14 @@ module FileUploader
             header 'X-Accel-Redirect', "/#{@@x_accel_redirect}/#{content.id}"
           end
           ""
-        else
+        elsif @@redirect_with_location
           status 302
           header 'Location', s3location
           {uri:s3location}
+        else
+          status 200
+          content_type s3obj.content_type
+          file ReesponseStreamer.new(s3location)
         end
       end
 
