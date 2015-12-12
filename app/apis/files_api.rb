@@ -112,6 +112,14 @@ module FileUploader
         status 200
         {state:'deleted'}
       end
+
+      get '' do
+        status 200
+        Content.where(user_id:@user_id).find_each.inject([]){|s,c|
+          s << c.id
+          s
+        }
+      end
     end
   end
 end
